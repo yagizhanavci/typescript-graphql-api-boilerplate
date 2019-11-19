@@ -1,13 +1,11 @@
-import { Resolver, Mutation, Arg, Ctx, UseMiddleware } from "type-graphql";
+import { Resolver, Mutation, Arg, Ctx } from "type-graphql";
 import { compare } from "bcryptjs";
 import { User } from "../../entity/User";
 import { MyContext } from "../../types/MyContext";
-import { rateLimit } from "../middlewares/rateLimit";
 
 @Resolver(User)
 export class LoginResolver {
   @Mutation(() => User, { nullable: true })
-  @UseMiddleware(rateLimit(3))
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,

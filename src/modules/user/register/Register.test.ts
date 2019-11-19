@@ -54,9 +54,16 @@ describe("register resolver", () => {
     });
 
     // Check for user
-    const dbuser = await User.findOne({ where: { email: user.email } });
+    let dbuser = await User.findOne({ where: { email: user.email } });
 
     expect(dbuser).toBeDefined();
     expect(dbuser!.confirmed).toBeFalsy();
+
+    // Confirm User
+    await User.update({ id: dbuser!.id }, { confirmed: true });
+
+    dbuser = await User.findOne({ where: { email: user.email } });
+
+    expect(dbuser!.confirmed).toBeTruthy();
   });
 });

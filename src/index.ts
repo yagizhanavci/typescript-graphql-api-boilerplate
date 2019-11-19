@@ -8,6 +8,7 @@ import connectRedis from "connect-redis";
 import { redis } from "./redis";
 import cors from "cors";
 import { MyContext } from "./types/MyContext";
+import { Redis } from "ioredis";
 
 const main = async () => {
   const schema = await buildSchema({
@@ -37,7 +38,7 @@ const main = async () => {
   app.use(
     session({
       store: new RedisStore({
-        client: redis as any,
+        client: redis as Redis,
       }),
       secret: "jhehuahuhheuehue",
       name: "qid",
