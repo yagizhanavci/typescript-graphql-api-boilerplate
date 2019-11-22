@@ -5,16 +5,13 @@ import {
   Arg,
   FieldResolver,
   Root,
-  UseMiddleware,
 } from "type-graphql";
 import { hash } from "bcryptjs";
 import { User } from "../../entity/User";
 import { RegisterInput } from "./register/RegisterInput";
-import { isAuth } from "../middlewares/isAuth";
 
 @Resolver(User)
 export class RegisterResolver {
-  @UseMiddleware(isAuth)
   @Query(() => String)
   async hello() {
     return "Hello World!";
