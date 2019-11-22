@@ -25,6 +25,20 @@ mutation Login($email:String!,$password:String!){
 }
 `;
 
+const registerMutation = `
+  mutation Register($data:RegisterInput!){
+    register(
+      data:$data
+    ){
+      id
+      firstName
+      lastName
+      email
+      name
+    }
+  }
+`;
+
 describe("login resolver tests", () => {
   it("logs user successfully", async () => {
     const user = {
@@ -35,7 +49,23 @@ describe("login resolver tests", () => {
       confirmed: true,
     };
 
-    await User.create(user).save();
+    await gCall({
+      source: registerMutation,
+      variableValues: {
+        data: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          password: user.password,
+        },
+      },
+    });
+
+    // Check for user in db
+    let dbuser = await User.findOne({ where: { email: user.email } });
+
+    expect(dbuser).toBeDefined();
+    expect(dbuser!.confirmed).toBeTruthy();
 
     const loginResponse = await gCall({
       source: loginMutation,

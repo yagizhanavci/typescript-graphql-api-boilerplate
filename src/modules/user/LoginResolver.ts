@@ -1,43 +1,60 @@
-import { Resolver, Mutation, Arg, Ctx } from "type-graphql";
+import {
+  Resolver,
+  Mutation,
+  Arg,
+  ObjectType,
+  Field,
+  Query,
+  Ctx,
+  UseMiddleware,
+} from "type-graphql";
 import { compare } from "bcryptjs";
 import { User } from "../../entity/User";
-import { MyContext } from "../../types/MyContext";
+import { MyContext } from "src/types/MyContext";
+import { createAccessToken, createRefreshToken } from "./auth";
+import { isAuth } from "../middlewares/isAuth";
+
+@ObjectType()
+class LoginResponse {
+  @Field()
+  accessToken: string;
+}
 
 @Resolver(User)
 export class LoginResolver {
-  @Mutation(() => User, { nullable: true })
+  @Query(() => [User], { nullable: true })
+  async getUsers(): Promise<User[] | null> {
+    return await User.find();
+  }
+
+  @Query(() => String, { nullable: true })
+  @UseMiddleware(isAuth)
+  async bye(@Ctx() { payload }: MyContext) {
+    return `your user id is ${payload!.userId}`;
+  }
+
+  @Mutation(() => LoginResponse)
   async login(
     @Arg("email") email: string,
     @Arg("password") password: string,
-    @Ctx() { req }: MyContext,
-  ): Promise<User | { error: string } | undefined> {
+    @Ctx() ctx: MyContext,
+  ): Promise<LoginResponse> {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return {
-        error: "user not found!",
-      };
+      throw new Error("User not found!");
     }
 
     const valid = await compare(password, user.password);
 
     if (!valid) {
-      return {
-        error: "invalid credentials!",
-      };
+      throw new Error("Invalid credentials!");
     }
 
-    if (!user.confirmed) {
-      return {
-        error: "not confirmed",
-      };
-    }
+    ctx.res.cookie("jid", createRefreshToken(user), { httpOnly: true });
 
-    if (req.session) {
-      req.session.userId = user.id;
-      return user;
-    }
-
-    return undefined;
+    return {
+      accessToken: createAccessToken(user),
+    };
   }
 }

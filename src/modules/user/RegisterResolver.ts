@@ -11,9 +11,6 @@ import { hash } from "bcryptjs";
 import { User } from "../../entity/User";
 import { RegisterInput } from "./register/RegisterInput";
 import { isAuth } from "../middlewares/isAuth";
-import { sendEmail } from "../utils/sendEmail";
-import { createConfirmationUrl } from "../utils/createConfirmationUrl";
-import { rateLimit } from "../middlewares/rateLimit";
 
 @Resolver(User)
 export class RegisterResolver {
@@ -29,7 +26,6 @@ export class RegisterResolver {
   }
 
   @Mutation(() => User)
-  @UseMiddleware(rateLimit())
   async register(
     @Arg("data") { firstName, lastName, email, password }: RegisterInput,
   ): Promise<User> {
@@ -41,8 +37,6 @@ export class RegisterResolver {
       email,
       password: hashedPassword,
     }).save();
-
-    await sendEmail(email, createConfirmationUrl(user.id));
 
     return user;
   }
